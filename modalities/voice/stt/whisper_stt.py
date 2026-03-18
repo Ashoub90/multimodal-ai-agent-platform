@@ -9,7 +9,7 @@ import numpy as np
 
 class WhisperSTT:
     def __init__(self):
-        # Using base as requested, CPU-bound (FP16=False)
+
         self.model = whisper.load_model("tiny")
 
     def transcribe(self, audio_bytes: bytes):
