@@ -1,19 +1,8 @@
-# Multimodal AI Agent Platform
+## 🚀 Quick Start
 
-Prototype skeleton for a modular AI voice agent system.
+1. **Clone the repo**
+2. **Install dependencies:** `pip install -r requirements.txt`
+3. **Download AI Models:** ```bash
+   python setup_models.py
 
-## Components
-
-- **FastAPI backend** with modular architecture
-- **React frontend** for web chat and voice
-- **PostgreSQL** database for persistence
-- **Redis** for session state and caching
-- **Docker / Docker Compose** for local development
-
-## Structure
-
-Refer to directories for channels, modalities, agent logic, and more.
-
-## Getting Started
-
-TODO: add setup instructions
+4. Run the server: uvicorn api.main:app --reload

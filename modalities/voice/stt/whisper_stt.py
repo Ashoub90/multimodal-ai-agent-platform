@@ -10,7 +10,7 @@ import numpy as np
 class WhisperSTT:
     def __init__(self):
 
-        self.model = whisper.load_model("tiny")
+        self.model = whisper.load_model("small")
 
     def transcribe(self, audio_bytes: bytes):
         if not audio_bytes:
@@ -21,7 +21,7 @@ class WhisperSTT:
         
         # Transcribe directly from the array
         # We set fp16=False because your logs show you are on a CPU
-        result = self.model.transcribe(audio_data, fp16=False)
+        result = self.model.transcribe(audio_data, fp16=False, language="ar", task="transcribe")        
         
         text = result.get("text", "").strip()
         return text

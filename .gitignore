@@ -1,11 +1,22 @@
+# Python & Environment
 venv/
 __pycache__/
 *.pyc
 .env
 .env.*
+*.log
+
+# Node & Frontend
 node_modules/
 dist/
 build/
+
+# OS Specific
 .DS_Store
-*.log*.onnx 
-*.onnx.json 
+Thumbs.db
+
+# Project Specific
+test_output.wav
+output.wav
+Piper/espeak-ng-data/  # Keep the DLLs, but ignore the massive data folder if needed
+# Note: Keep *.onnx and *.onnx.json if you want the models in the repo!

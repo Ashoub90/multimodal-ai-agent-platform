@@ -116,7 +116,7 @@ function VoiceStreamer() {
 
       <div style={{ marginTop: "20px" }}>
         {messages
-          .filter((msg) => msg.type === "transcript" || msg.type === "assistant")
+          .filter((msg) => msg.type === "transcript" || msg.type === "assistant_audio")
           .map((msg, index) => (
             <p key={index}>
               {msg.type === "transcript" && <strong>You:</strong>}
