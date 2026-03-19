@@ -1,11 +1,11 @@
 import time
+import re
 from openai import OpenAI
 
 PROMPTS = {
     "ar": (
         "You are a sophisticated Egyptian Customer Service Lead. "
         "Use White-Collar Egyptian Ammiya. Be polite and concise (max 15 words). "
-        "Use 'تمام يا فندم', 'من عينيا'."
     ),
     "en": (
         "You are a professional Customer Service Lead. Use a helpful, elegant tone. "
@@ -18,6 +18,14 @@ class ConversationService:
         self.client = OpenAI()
         self.history = {}
         self.language = {} # session_id -> 'ar' or 'en'
+
+    def clean_text(self, text: str) -> str:
+        """Removes markdown list markers and extra symbols that confuse TTS."""
+        # Remove markdown bold/italic
+        text = text.replace("**", "").replace("__", "")
+        # Remove leading list numbers like '1. ', '2. '
+        text = re.sub(r"^\d+\.\s*", "", text)
+        return text.strip()
 
     async def handle_message_stream(self, session_id: str, user_message: str):
         # Default to English if not set
