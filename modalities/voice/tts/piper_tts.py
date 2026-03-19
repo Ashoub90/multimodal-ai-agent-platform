@@ -48,22 +48,43 @@ class PiperTTS(BaseTTS):
 
     async def synthesize(self, text: str):
             import numpy as np
-            if not text.strip(): return b""
+            import io
+            import wave
+            # Ensure you have created accent_fixer.py or import the local logic here
+            try:
+                from .accent_fixer import egyptianize_text
+            except ImportError:
+                # Fallback if the file isn't created yet to prevent crashing
+                def egyptianize_text(t): return t
+
+            if not text.strip():
+                return b""
                 
             buffer = io.BytesIO()
             voice_to_use = self.voices.get(self.current_lang)
+            
             if not voice_to_use:
                 return b""
-                
-            voice_to_use.config.length_scale = 0.85 
+
+            # --- EGYPTIAN ACCENT & SPEED TUNING ---
+            if self.current_lang == "ar":
+                # 0.75 - 0.78 is the 'sweet spot' for Egyptian energetic speech
+                voice_to_use.config.length_scale = 0.78
+                # Apply Tashkeel and phonetic hinting
+                processed_text = egyptianize_text(text)
+            else:
+                # Standard speed for English (Lessac)
+                voice_to_use.config.length_scale = 1.0
+                processed_text = text
 
             with wave.open(buffer, "wb") as wav_file:
                 wav_file.setnchannels(1) 
                 wav_file.setsampwidth(2) 
                 wav_file.setframerate(voice_to_use.config.sample_rate)
                 
-                for result in voice_to_use.synthesize(text):
-                    # 1. Check if we have the float array (which we saw in your log)
+                # Use the processed_text instead of raw text
+                for result in voice_to_use.synthesize(processed_text):
+                    # 1. Handle float32 array (The primary format for your Piper version)
                     if hasattr(result, "audio_float_array") and result.audio_float_array is not None:
                         # Convert float32 (-1.0 to 1.0) to int16 (-32768 to 32767)
                         audio_int16 = (result.audio_float_array * 32767).astype(np.int16)
@@ -71,6 +92,7 @@ class PiperTTS(BaseTTS):
                     
                     # 2. Fallback: Check for the int16 array if it exists
                     elif hasattr(result, "audio_int16_array") and result.audio_int16_array is not None:
-                        wav_file.writeframes(np.array(result.audio_int16_array, dtype=np.int16).tobytes())
+                        audio_int16 = np.array(result.audio_int16_array, dtype=np.int16)
+                        wav_file.writeframes(audio_int16.tobytes())
                     
             return buffer.getvalue()

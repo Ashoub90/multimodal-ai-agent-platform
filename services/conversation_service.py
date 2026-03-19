@@ -1,41 +1,44 @@
-from openai import OpenAI
-from modalities.voice.tts.base_tts import BaseTTS
-from observability.logger import log_event
 import time
+from openai import OpenAI
 
-SYSTEM_PROMPT = (
-    "You are a professional Egyptian Customer Service assistant. "
-    "1. Respond in short, helpful spoken sentences. "
-    "2. Use polite Egyptian Arabic (Ammiya) like 'صباح الخير يا فندم', 'تحت أمرك', 'أقدر أساعدك إزاي؟'. "
-    "3. Use full diacritics (Tashkeel) on all Arabic text so the voice engine pronounces it naturally. "
-    "4. If the user speaks English, respond in English."
-)
+PROMPTS = {
+    "ar": (
+        "You are a sophisticated Egyptian Customer Service Lead. "
+        "Use White-Collar Egyptian Ammiya. Be polite and concise (max 15 words). "
+        "Use 'تمام يا فندم', 'من عينيا'."
+    ),
+    "en": (
+        "You are a professional Customer Service Lead. Use a helpful, elegant tone. "
+        "Keep responses under 15 words."
+    )
+}
 
 class ConversationService:
-    """
-    Handles user messages and generates AI responses using pluggable TTS.
-    """
-
-    def __init__(self, tts_engine: BaseTTS):
+    def __init__(self):
         self.client = OpenAI()
-        # Dependency Injection: We pass the engine in from the outside
-        self.tts = tts_engine
+        self.history = {}
+        self.language = {} # session_id -> 'ar' or 'en'
 
-    async def handle_message(self, session_id: str, user_message: str):
-        start_total = time.time()
+    async def handle_message_stream(self, session_id: str, user_message: str):
+        # Default to English if not set
+        lang = self.language.get(session_id, "en")
+        
+        if session_id not in self.history:
+            self.history[session_id] = [{"role": "system", "content": PROMPTS[lang]}]
+        
+        self.history[session_id].append({"role": "user", "content": user_message})
 
-        # 1. LLM Generation
-        llm_start = time.time()
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system",
-                 "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
+            messages=self.history[session_id][-6:],
+            stream=True 
         )
-        assistant_reply = response.choices[0].message.content
-        log_event("llm_latency", {"duration": time.time() - llm_start, "text_length": len(assistant_reply)})
 
+        full_content = ""
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                full_content += content
+                yield content 
 
-        return assistant_reply
+        self.history[session_id].append({"role": "assistant", "content": full_content})
