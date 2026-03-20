@@ -1,10 +1,10 @@
 import sys
 import os
+import asyncio
 
 # Path fix to find 'modalities'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import logging
 from livekit.agents import JobContext, WorkerOptions, cli
 from modalities.voice.livekit_handler import get_realtime_agent
 from dotenv import load_dotenv
@@ -14,18 +14,22 @@ load_dotenv()
 async def entrypoint(ctx: JobContext):
     await ctx.connect()
     
-    # Get both the session and the assistant class
+    # Initialize session and assistant from your handler
     session, assistant = get_realtime_agent()
-    
-    # FIX: Pass the agent here as a keyword argument
+
+    # Start the session and send the initial greeting
     await session.start(room=ctx.room, agent=assistant)
-    
-    # Now generate the opening greeting
     await session.say("أهلاً بك في مطعمنا، تحب تطلب إيه النهاردة؟")
 
+    # Keep the job alive until the participant disconnects
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except asyncio.CancelledError:
+        pass
+
 if __name__ == "__main__":
-    # We add an 'agent_name' here so the playground can call it explicitly
     cli.run_app(WorkerOptions(
-        entrypoint_fnc=entrypoint,
-        agent_name="egyptian-assistant" 
+        entrypoint_fnc=entrypoint, 
+        agent_name="egyptian-assistant"
     ))
