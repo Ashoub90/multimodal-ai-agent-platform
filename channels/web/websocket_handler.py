@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import WebSocket, WebSocketDisconnect
 
 from core.session_manager import session_manager
-from services.conversation_service import ConversationService, PROMPTS
+from conversation.conversation_service import ConversationService, PROMPTS
 from modalities.voice.tts.elevenlabs_tts import ElevenLabsTTS 
 from modalities.voice.tts.openai_tts import OpenAITTS 
 from modalities.voice.stt.whisper_stt import WhisperSTT 
